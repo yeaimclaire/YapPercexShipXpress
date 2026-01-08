@@ -225,10 +225,10 @@ export default function Checkout() {
                   />
                   <div>
                     <p className="text-sm font-medium text-gray-800">
-                      Scan this QR to pay (dummy)
+                      Scan this QR code to pay
                     </p>
                     <p className="text-xs text-gray-600 mt-1">
-                      Payment is simulated. Click the button after you &quot;pay&quot;.
+                      Confirm the payment after you complete the transfer.
                     </p>
                   </div>
                 </div>
