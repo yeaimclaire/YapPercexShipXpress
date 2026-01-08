@@ -1,0 +1,140 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: shipxpress-db
+    environment:
+      POSTGRES_USER: shipxpress
+      POSTGRES_PASSWORD: shipxpress123
+      POSTGRES_DB: shipxpress
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shipxpress"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  customer-service:
+    build: ./services/customer-service
+    container_name: shipxpress-customer
+    ports:
+      - "4001:4000"
+    environment:
+      DATABASE_URL: postgresql://shipxpress:shipxpress123@postgres:5432/shipxpress
+      PORT: 4000
+      SERVICE_NAME: customer-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  vehicle-service:
+    build: ./services/vehicle-service
+    container_name: shipxpress-vehicle
+    ports:
+      - "4002:4000"
+    environment:
+      DATABASE_URL: postgresql://shipxpress:shipxpress123@postgres:5432/shipxpress
+      PORT: 4000
+      SERVICE_NAME: vehicle-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  driver-service:
+    build: ./services/driver-service
+    container_name: shipxpress-driver
+    ports:
+      - "4003:4000"
+    environment:
+      DATABASE_URL: postgresql://shipxpress:shipxpress123@postgres:5432/shipxpress
+      PORT: 4000
+      SERVICE_NAME: driver-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  shipment-service:
+    build: ./services/shipment-service
+    container_name: shipxpress-shipment
+    ports:
+      - "4004:4000"
+    environment:
+      DATABASE_URL: postgresql://shipxpress:shipxpress123@postgres:5432/shipxpress
+      PORT: 4000
+      SERVICE_NAME: shipment-service
+      MARKETPLACE_USER_SERVICE_URL: http://host.docker.internal:4010/graphql
+      MARKETPLACE_ORDER_SERVICE_URL: http://host.docker.internal:4012/graphql
+      MARKETPLACE_PAYMENT_SERVICE_URL: http://host.docker.internal:4013/graphql
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  tracking-service:
+    build: ./services/tracking-service
+    container_name: shipxpress-tracking
+    ports:
+      - "4005:4000"
+    environment:
+      DATABASE_URL: postgresql://shipxpress:shipxpress123@postgres:5432/shipxpress
+      PORT: 4000
+      SERVICE_NAME: tracking-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  auth-service:
+    build: ./services/auth-service
+    container_name: shipxpress-auth
+    ports:
+      - "4006:4000"
+    environment:
+      DATABASE_URL: postgresql://shipxpress:shipxpress123@postgres:5432/shipxpress
+      PORT: 4000
+      SERVICE_NAME: auth-service
+      JWT_SECRET: shipxpress-secret-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build: ./gateway
+    container_name: shipxpress-gateway
+    ports:
+      - "4000:4000"
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:4000/graphql
+      CUSTOMER_SERVICE_URL: http://customer-service:4000/graphql
+      VEHICLE_SERVICE_URL: http://vehicle-service:4000/graphql
+      DRIVER_SERVICE_URL: http://driver-service:4000/graphql
+      SHIPMENT_SERVICE_URL: http://shipment-service:4000/graphql
+      TRACKING_SERVICE_URL: http://tracking-service:4000/graphql
+      PORT: 4000
+    depends_on:
+      - auth-service
+      - customer-service
+      - vehicle-service
+      - driver-service
+      - shipment-service
+      - tracking-service
+
+  frontend:
+    build: ./frontend
+    container_name: shipxpress-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_GRAPHQL_URL: http://localhost:4000/graphql
+    depends_on:
+      - gateway
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    networks:
+      - default
+
+volumes:
+  postgres_data:

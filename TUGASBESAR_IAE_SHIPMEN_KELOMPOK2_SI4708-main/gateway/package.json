@@ -1,0 +1,28 @@
+{
+  "name": "shipxpress-gateway",
+  "version": "1.0.0",
+  "description": "GraphQL Gateway for ShipXpress",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@apollo/gateway": "^2.5.0",
+    "@apollo/server": "^4.9.5",
+    "express": "^4.18.2",
+    "graphql": "^16.8.1",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.5",
+    "@types/cors": "^2.8.17",
+    "@types/body-parser": "^1.19.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  }
+}
+

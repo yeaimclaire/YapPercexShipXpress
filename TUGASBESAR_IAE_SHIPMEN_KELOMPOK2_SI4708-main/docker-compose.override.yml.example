@@ -1,0 +1,3 @@
+# Copy this file to docker-compose.override.yml if you need to override settings
+# This file is for local development overrides
+

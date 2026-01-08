@@ -1,0 +1,19 @@
+# Query: list payments
+query Payments {
+  payments {
+    payment_id
+    order_id
+    amount
+    payment_status
+  }
+}
+
+# Mutation: process payment
+mutation ProcessPayment($input: PaymentInput!) {
+  processPayment(input: $input) {
+    payment_id
+    order_id
+    amount
+    payment_status
+  }
+}

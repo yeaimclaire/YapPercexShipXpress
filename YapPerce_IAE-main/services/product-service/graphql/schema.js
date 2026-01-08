@@ -1,0 +1,55 @@
+const { gql } = require('apollo-server-express');
+
+const typeDefs = gql`
+  type Category {
+    category_id: ID!
+    category_name: String!
+  }
+
+  type Product {
+    product_id: ID!
+    name: String!
+    description: String
+    price: Float!
+    stock: Int!
+    category_id: Int
+    user_id: Int
+    category: Category
+    seller: User
+  }
+
+  type User {
+    user_id: ID!
+    name: String!
+    email: String!
+  }
+
+  input ProductInput {
+    name: String!
+    description: String
+    price: Float!
+    stock: Int!
+    category_id: Int
+    user_id: Int!
+  }
+
+  type Query {
+    products: [Product!]!
+    product(id: ID!): Product
+    productsByCategory(categoryId: ID!): [Product!]!
+    productsBySeller(userId: ID!): [Product!]!
+    categories: [Category!]!
+    category(id: ID!): Category
+  }
+
+  type Mutation {
+    createProduct(input: ProductInput!): Product!
+    updateProduct(id: ID!, input: ProductInput!): Product!
+    deleteProduct(id: ID!): Boolean!
+    updateStock(id: ID!, stock: Int!): Product!
+    createCategory(categoryName: String!): Category!
+  }
+`;
+
+module.exports = typeDefs;
+

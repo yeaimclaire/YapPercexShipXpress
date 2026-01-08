@@ -1,0 +1,19 @@
+# Mutation: create shipment
+mutation CreateShipment($orderId: ID!, $userId: Int!, $items: [ShipmentItemInput!]!) {
+  createShipment(orderId: $orderId, userId: $userId, items: $items) {
+    success
+    shipmentId
+    message
+  }
+}
+
+# Query: shipment by id
+query Shipment($shipmentId: ID!) {
+  shipment(shipmentId: $shipmentId) {
+    shipmentId
+    orderId
+    userId
+    status
+    trackingNumber
+  }
+}
