@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 255, 234, 242;
+  --background-end-rgb: 255, 245, 249;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: radial-gradient(
+      circle at 20% 20%,
+      rgba(250, 196, 214, 0.35),
+      transparent 45%
+    ),
+    radial-gradient(
+      circle at 80% 10%,
+      rgba(253, 220, 233, 0.4),
+      transparent 40%
+    ),
+    linear-gradient(
+      180deg,
+      rgb(var(--background-start-rgb)) 0%,
+      rgb(var(--background-end-rgb)) 60%,
+      #ffffff 100%
+    );
+}
+
+/* Ensure input fields have visible text */
+input, textarea, select {
+  color: #111827 !important; /* text-gray-900 */
+  background-color: #ffffff !important;
+  caret-color: #111827 !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #9ca3af !important; /* text-gray-400 */
+}
+
+input:disabled, textarea:disabled, select:disabled {
+  color: #6b7280 !important; /* text-gray-500 */
+  background-color: #f3f4f6 !important; /* bg-gray-100 */
+}
+
+/* Ensure inputs in focus state are visible */
+input:focus, textarea:focus, select:focus {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+/* Override any existing styles from Tailwind */
+input[type="text"], input[type="email"], input[type="password"], input[type="tel"], textarea {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+input[disabled], textarea[disabled], select[disabled] {
+  color: #6b7280 !important;
+  background-color: #f3f4f6 !important;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

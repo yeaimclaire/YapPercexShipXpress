@@ -1,0 +1,33 @@
+# Query: list users
+query Users {
+  users {
+    user_id
+    name
+    email
+    phone
+    address
+  }
+}
+
+# Query: user by id
+query UserById($id: ID!) {
+  user(id: $id) {
+    user_id
+    name
+    email
+    phone
+    address
+  }
+}
+
+# Mutation: register user
+mutation RegisterUser($input: RegisterInput!) {
+  registerUser(input: $input) {
+    token
+    user {
+      user_id
+      name
+      email
+    }
+  }
+}

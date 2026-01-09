@@ -1,0 +1,24 @@
+# Query: list orders
+query Orders {
+  orders {
+    order_id
+    user_id
+    total_amount
+    status
+  }
+}
+
+# Mutation: create order
+mutation CreateOrder($input: OrderInput!) {
+  createOrder(input: $input) {
+    order_id
+    user_id
+    total_amount
+    status
+  }
+}
+
+# Mutation: send order to ShipXpress
+mutation SendOrderToShipXpress($orderId: ID!) {
+  sendOrderToShipXpress(orderId: $orderId)
+}

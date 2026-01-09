@@ -1,0 +1,29 @@
+# Query: list products
+query Products {
+  products {
+    product_id
+    name
+    price
+    stock
+  }
+}
+
+# Query: products by category
+query ProductsByCategory($categoryId: ID!) {
+  productsByCategory(categoryId: $categoryId) {
+    product_id
+    name
+    price
+    stock
+  }
+}
+
+# Mutation: create product
+mutation CreateProduct($input: ProductInput!) {
+  createProduct(input: $input) {
+    product_id
+    name
+    price
+    stock
+  }
+}
