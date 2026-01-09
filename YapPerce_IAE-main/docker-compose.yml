@@ -154,7 +154,7 @@ services:
     build: ./frontend
     container_name: frontend
     ports:
-      - "5000:3000"
+      - "4000:3000"
     environment:
       - NEXT_PUBLIC_USER_SERVICE_URL=http://localhost:4010/graphql
       - NEXT_PUBLIC_PRODUCT_SERVICE_URL=http://localhost:4011/graphql

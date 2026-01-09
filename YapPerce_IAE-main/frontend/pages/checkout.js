@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useMutation } from '@apollo/client';
 import { orderClient, paymentClient } from '../lib/apollo-client';
 import Layout from '../components/Layout';
+import PaymentQR from '../components/PaymentQR';
 import { gql } from '@apollo/client';
 import { useRouter } from 'next/router';
 import useCartStore from '../store/cartStore';
@@ -43,6 +44,9 @@ export default function Checkout() {
   const { user, isAuthenticated } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [currentPaymentId, setCurrentPaymentId] = useState(null);
+  const [orderData, setOrderData] = useState(null);
+  const [isRefreshingPayment, setIsRefreshingPayment] = useState(false);
 
   const [createOrder] = useMutation(CREATE_ORDER, {
     client: orderClient,
@@ -60,7 +64,8 @@ export default function Checkout() {
     }).format(price);
   };
 
-  const handleCheckout = async () => {
+  // Create initial payment and order
+  const handleCreatePayment = async () => {
     if (!isAuthenticated || !user) {
       toast.error('Please login to continue');
       router.push('/login');
@@ -73,6 +78,7 @@ export default function Checkout() {
     }
 
     setLoading(true);
+    setPaymentConfirmed(false);
 
     try {
       // Create order
@@ -90,13 +96,66 @@ export default function Checkout() {
       });
 
       const order = orderResult.data.createOrder;
+      setOrderData(order);
 
+      // Create payment (not process yet, just create)
+      // This will show the QR code with amount
+      setCurrentPaymentId(`payment_${Date.now()}`);
+      
+      toast.success('Payment QR generated! Scan to pay.');
+    } catch (error) {
+      toast.error(error.message || 'Failed to create payment');
+      console.error('Payment creation error:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle QR expiration - create new payment
+  const handleQRExpired = async () => {
+    toast.error('QR code has expired. Generating a new one...');
+    // Reset and generate new payment
+    setCurrentPaymentId(null);
+    setPaymentConfirmed(false);
+  };
+
+  // Refresh payment when QR expires
+  const handleRefreshPayment = async () => {
+    if (!orderData) return;
+    
+    setIsRefreshingPayment(true);
+    try {
+      setCurrentPaymentId(`payment_${Date.now()}`);
+      toast.success('New payment QR generated!');
+    } catch (error) {
+      toast.error('Failed to refresh payment');
+      console.error('Payment refresh error:', error);
+    } finally {
+      setIsRefreshingPayment(false);
+    }
+  };
+
+  // Final checkout - process payment after QR confirmed
+  const handleCheckout = async () => {
+    if (!orderData) {
+      toast.error('Please generate payment QR first');
+      return;
+    }
+
+    if (!paymentConfirmed) {
+      toast.error('Please confirm that you have completed the payment');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
       // Process payment
       const paymentResult = await processPayment({
         variables: {
           input: {
-            order_id: parseInt(order.order_id),
-            amount: order.total_amount,
+            order_id: parseInt(orderData.order_id),
+            amount: orderData.total_amount,
           },
         },
       });
@@ -104,7 +163,7 @@ export default function Checkout() {
       if (paymentResult.data.processPayment.payment_status === 'Berhasil') {
         clearCart();
         toast.success('Order placed successfully!');
-        router.push(`/orders/${order.order_id}`);
+        router.push(`/orders/${orderData.order_id}`);
       } else {
         toast.error('Payment failed');
       }
@@ -216,39 +275,44 @@ export default function Checkout() {
                   />
                 </div>
               </div>
-              <div className="rounded-xl border border-primary-100 bg-primary-50/60 p-4 mb-6">
-                <div className="flex flex-col items-center text-center gap-3">
-                  <img
-                    src="/qr-dummy.svg"
-                    alt="QR payment code"
-                    className="h-44 w-44"
+
+              {/* Show PaymentQR if order exists */}
+              {orderData && currentPaymentId ? (
+                <>
+                  <PaymentQR
+                    amount={orderData.total_amount}
+                    paymentId={currentPaymentId}
+                    onQRExpired={handleQRExpired}
+                    isRefreshing={isRefreshingPayment}
                   />
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      Scan this QR code to pay
-                    </p>
-                    <p className="text-xs text-gray-600 mt-1">
-                      Confirm the payment after you complete the transfer.
-                    </p>
-                  </div>
-                </div>
-                <label className="mt-4 flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={paymentConfirmed}
-                    onChange={(e) => setPaymentConfirmed(e.target.checked)}
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  />
-                  I have completed the payment
-                </label>
-              </div>
-              <button
-                onClick={handleCheckout}
-                disabled={loading || !paymentConfirmed}
-                className="w-full py-3 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-              >
-                {loading ? 'Processing...' : 'Confirm Payment & Place Order'}
-              </button>
+                  
+                  <label className="flex items-center gap-2 text-sm text-gray-700 mb-4">
+                    <input
+                      type="checkbox"
+                      checked={paymentConfirmed}
+                      onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    />
+                    I have completed the payment
+                  </label>
+
+                  <button
+                    onClick={handleCheckout}
+                    disabled={loading || !paymentConfirmed}
+                    className="w-full py-3 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                  >
+                    {loading ? 'Processing...' : 'Confirm Payment & Place Order'}
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={handleCreatePayment}
+                  disabled={loading}
+                  className="w-full py-3 bg-primary-600 text-white rounded-md font-medium hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+                >
+                  {loading ? 'Generating Payment QR...' : 'Generate Payment QR'}
+                </button>
+              )}
             </div>
           </div>
         </div>
